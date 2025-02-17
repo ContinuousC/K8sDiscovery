@@ -1,0 +1,68 @@
+################################################################################
+# Copyright ContinuousC. Licensed under the "Elastic License 2.0".             #
+################################################################################
+
+app:
+  imageRegistryBase: "gitea.contc/continuousc"
+
+discovery:
+  cluster: ""
+  image: k8s-discovery
+  tag: '0.1.5-acc.30'
+  intervalMinutes: 1
+  engineUrl: ""
+  token:
+    url: ""
+    userName: ""
+    secretName: credentials
+    secretPath: discovery.secret
+  opensearchUrl: ""
+  authenticationCertsSecretName: ""
+  createClusterRole: true
+
+prometheus:
+  enabled: true
+  rbac:
+    create: false
+  serviceAccounts:
+    server:
+      create: false
+      name: k8s-discovery
+  server:
+    image: # for debugging
+      repository: gitea.contc/continuousc/prometheus-sslkeys
+      pullPolicy: Always
+    extraArgs:
+      log.level: debug
+    fullnameOverride: k8s-discovery-prometheus-server
+    clusterRoleNameOverride: continuousc-k8s-discovery
+    prefixURL: /prometheus
+    baseURL: /prometheus
+    global:
+      scrape_interval: 1m
+      scrape_timeout: 10s
+      evaluation_interval: 1m
+    # extraSecretMounts:
+    #   - name: credentials
+    #     secretName: credentials
+    #     mountPath: /etc/secrets
+    extraConfigmapMounts:
+      - name: continuousc
+        configMap: k8s-discovery-continuousc-ca
+        mountPath: /etc/continuousc
+      - name: scrape-configs
+        configMap: k8s-discovery-scrape-configs
+        mountPath: /var/lib/prometheus/scrape_configs
+  serverFiles:
+    prometheus.yml:
+      scrape_configs: []
+      scrape_config_files:
+        - "/var/lib/prometheus/scrape_configs/*.yaml"
+  prometheus-node-exporter:
+    fullnameOverride: prometheus-node-exporter
+  kube-state-metrics:
+    fullnameOverride: kube-state-metrics
+  alertmanager:
+    enabled: false
+  prometheus-pushgateway:
+    enabled: false

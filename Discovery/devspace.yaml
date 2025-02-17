@@ -1,0 +1,40 @@
+################################################################################
+# Copyright ContinuousC. Licensed under the "Elastic License 2.0".             #
+################################################################################
+
+version: v2beta1
+name: k8s-discovery-dev
+
+dev:
+  discovery:
+    imageSelector: gitea.contc/continuousc/k8s-discovery
+    devImage: gitea.contc/controlplane/rust-builder-alpine:0.1.4
+    workingDir: /root/source/k8s-discovery
+    command: ["cargo", "watch", "-x", "run"]
+    env:
+      - name: CARGO_TERM_COLOR
+        value: always
+      - name: RUST_BACKTRACE
+        value: "1"
+      - name: RUST_LOG
+        value: k8s_discovery=debug
+    logs:
+      enabled: true
+    persistPaths:
+      - path: /root/.cargo/registry
+        volumePath: cargo-registry
+        skipPopulate: true
+      - path: /root/source/k8s-discovery/target
+        volumePath: cargo-target
+        skipPopulate: true
+    sync:
+      - path: .:/root/source/k8s-discovery
+        excludeFile: .gitignore
+        printLogs: true
+        startContainer: true
+        waitInitialSync: true
+        disableDownload: true
+      - path: .:/app
+        excludePaths:
+          - /devspace.yaml
+          - "*~"

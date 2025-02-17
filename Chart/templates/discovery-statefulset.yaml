@@ -1,0 +1,95 @@
+################################################################################
+# Copyright ContinuousC. Licensed under the "Elastic License 2.0".             #
+################################################################################
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: k8s-discovery
+  labels:
+    app.kubernetes.io/name: k8s-discovery
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: k8s-discovery
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: k8s-discovery
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      serviceAccountName: k8s-discovery
+      imagePullSecrets:
+        - name: private-registry
+      containers:
+        - name: k8s-discovery
+          imagePullPolicy: Always
+          image: "{{ required "Need imageRegistryBase name" .Values.app.imageRegistryBase }}/{{ .Values.discovery.image }}:{{ .Values.discovery.tag | default "latest"}}"
+          command: ["/usr/bin/k8s-discovery"]
+          env:
+            - name: CONTINUOUSC_CLUSTER
+              value: "{{ required "Need cluster name" .Values.discovery.cluster}}"
+            {{- if .Values.discovery.intervalMinutes }}
+            - name: CONTINUOUSC_INTERVAL
+              value: "{{ .Values.discovery.intervalMinutes}}"
+            {{- end }}
+            {{- if .Values.discovery.engineUrl }}
+            - name: CONTINUOUSC_ENGINE
+              value: "{{ .Values.discovery.engineUrl }}"
+            {{- end }}
+            {{- if .Values.discovery.opensearchUrl }}
+            - name: CONTINUOUSC_EVENTS
+              value: "true"
+            - name: CONTINUOUSC_OPENSEARCH_URL
+              value: "{{ .Values.discovery.opensearchUrl }}"
+            {{- end }}
+            {{- if .Values.discovery.authenticationCertsSecretName }}
+            - name: CONTINUOUSC_AUTH_CERT
+              value: /usr/share/continuousc/certs/tls.crt
+            - name: CONTINUOUSC_AUTH_KEY
+              value: /usr/share/continuousc/certs/tls.key
+            {{- end }}
+            - name: CONTINUOUSC_AUTH_CA
+              value: "/usr/share/continuousc/ca-cert/ca.crt"
+            {{- if .Values.discovery.token.url }}
+            - name: CONTINUOUSC_TOKEN_URL
+              value: {{ .Values.discovery.token.url }}
+            - name: CONTINUOUSC_TOKEN_USER
+              value: {{ .Values.discovery.token.userName }}
+            - name: CONTINUOUSC_TOKEN_SECRET_PATH
+              value: /usr/share/continuousc/token-creds/{{ .Values.discovery.token.secretPath }}
+            {{- end }}
+          volumeMounts:
+            - name: state
+              mountPath: /usr/share/continuousc/state
+            - name: ca-cert
+              mountPath: /usr/share/continuousc/ca-cert
+            {{- if .Values.discovery.token.url }}
+            - name: credentials
+              mountPath: /usr/share/continuousc/token-creds
+            {{- end }}
+            {{- if .Values.discovery.authenticationCertsSecretName }}
+            - name: authentication-cert
+              readOnly: true
+              mountPath: /usr/share/continuousc/certs
+            {{ end }}
+      volumes:
+        - name: state
+          persistentVolumeClaim:
+            claimName: k8s-discovery-state
+        - name: ca-cert
+          configMap:
+            name: k8s-discovery-continuousc-ca
+        {{- if .Values.discovery.token.url }}
+        - name: credentials
+          secret:
+            secretName: {{ .Values.discovery.token.secretName }}
+        {{- end }}
+        {{- if .Values.discovery.authenticationCertsSecretName }}
+        - name: authentication-cert
+          secret:
+            secretName: {{ .Values.discovery.authenticationCertsSecretName }}
+        {{ end }}

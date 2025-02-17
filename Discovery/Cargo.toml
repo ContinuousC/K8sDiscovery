@@ -1,0 +1,39 @@
+[package]
+name = "k8s-discovery"
+description = "Discovery daemon for Kubernetes clusters"
+version = "0.1.5-acc.30"
+authors = [
+    "André Bongima <abo@continuousc.eu>",
+    "Maarten Deprez <mdp@continuousc.eu>",
+]
+repository = "https://github.com/ContinuousC/K8sDiscovery.git"
+license = "Elastic-2.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+kube = { version = "0.88.1", features = ["runtime", "derive"] }
+k8s-openapi = { version = "0.21.0", features = ["latest"] }
+tokio = { version = "1.32.0", features = ["full"] }
+futures = "0.3.17"
+serde = "1.0.105"
+serde_json = "1.0.105"
+thiserror = "1.0.47"
+log = "0.4.20"
+clap = { version = "4.4.1", features = ["env", "derive"] }
+uuid = { version = "1.4.1", features = ["v4"] }
+serde_with = "3.3.0"
+reqwest = { version = "0.12.8", default-features = false, features = [
+    "http2",
+    "json",
+    "rustls-tls",
+] }
+url = "2.4.1"
+env_logger = "0.10.0"
+opensearch = { version = "2.1.0", default-features = false, features = [
+    "rustls-tls",
+] }
+chrono = "0.4.31"
+regex = "1.4"
+h2 = "0.3.26"
+mimalloc = "0.1.43"

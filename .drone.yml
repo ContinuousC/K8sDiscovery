@@ -1,0 +1,213 @@
+kind: pipeline
+type: docker
+name: k8s-discovery
+
+clone:
+  skip_verify: true
+
+environment:
+  DOCKER_HOST: unix:///var/run/docker.sock
+  BUILDKIT_NO_CLIENT_TOKEN: 1
+  DOCKER_BUILDKIT: 1
+
+volumes:
+  - name: dockerd
+    host:
+      path: /var/run/docker.sock
+
+steps:
+  - name: source
+    image: plugins/docker
+    volumes:
+      - name: dockerd
+        path: /var/run/docker.sock
+    settings:
+      daemon_off: true
+      dry_run: true
+      dockerfile: Discovery/Dockerfile
+      context: Discovery
+      repo: k8s-discovery-source
+      target: source
+
+  - name: test
+    depends_on:
+      - source
+    image: plugins/docker
+    volumes:
+      - name: dockerd
+        path: /var/run/docker.sock
+    settings:
+      daemon_off: true
+      dry_run: true
+      dockerfile: Discovery/Dockerfile
+      context: Discovery
+      repo: k8s-discovery-test
+      target: test
+
+  - name: audit
+    depends_on:
+      - source
+    image: plugins/docker
+    volumes:
+      - name: dockerd
+        path: /var/run/docker.sock
+    settings:
+      daemon_off: true
+      dry_run: true
+      dockerfile: Discovery/Dockerfile
+      context: Discovery
+      repo: k8s-discovery-audit
+      target: audit
+
+  - name: build
+    depends_on:
+      - test
+      - audit
+    image: plugins/docker
+    volumes:
+      - name: dockerd
+        path: /var/run/docker.sock
+    settings:
+      daemon_off: true
+      dry_run: true
+      dockerfile: Discovery/Dockerfile
+      context: Discovery
+      repo: k8s-discovery-build
+      target: build-release
+
+  - name: push-image-gitea
+    depends_on:
+      - build
+    image: plugins/docker
+    volumes:
+      - name: dockerd
+        path: /var/run/docker.sock
+    settings:
+      daemon_off: true
+      registry: gitea.contc
+      repo: gitea.contc/continuousc/k8s-discovery
+      username: ci
+      password:
+        from_secret: gitea-docker-registry-password
+      tags:
+        - latest
+      force_tag: true
+      dockerfile: Discovery/Dockerfile
+      context: Discovery
+      target: release
+      cache_from:
+        - k8s-discovery
+
+  - name: push-image-gitea-tagged
+    when:
+      ref:
+        - refs/tags/k8s-discovery-image_v*
+    depends_on:
+      - build
+    image: plugins/docker
+    volumes:
+      - name: dockerd
+        path: /var/run/docker.sock
+    settings:
+      daemon_off: true
+      registry: gitea.contc
+      repo: gitea.contc/continuousc/k8s-discovery
+      username: ci
+      password:
+        from_secret: gitea-docker-registry-password
+      tags:
+        - ${DRONE_TAG#k8s-discovery-image_v}
+      dockerfile: Discovery/Dockerfile
+      context: Discovery
+      target: release
+      cache_from:
+        - k8s-discovery
+
+  - name: push-helm-chart-gitea
+    image: alpine/helm
+    when:
+      ref:
+        - refs/tags/k8s-discovery-chart_v*
+    environment:
+      REGISTRY_URL: http://gitea-http.gitea:3000/api/packages/ContinuousC/helm
+      REGISTRY_PASSWORD:
+        from_secret: gitea-helm-registry-password
+    commands:
+      - helm plugin install https://github.com/chartmuseum/helm-push
+      - helm repo add repo $${REGISTRY_URL} --username ci --password $${REGISTRY_PASSWORD}
+      - helm cm-push Chart repo
+
+  - name: build-techdocs
+    when:
+      ref:
+        - refs/heads/main
+    image: plugins/docker
+    volumes:
+      - name: dockerd
+        path: /var/run/docker.sock
+    settings:
+      daemon_off: true
+      dry_run: true
+      repo: k8s-discovery-techdocs
+      target: build-techdocs
+
+  - name: build-rustdocs
+    when:
+      ref:
+        - refs/heads/main
+    image: plugins/docker
+    volumes:
+      - name: dockerd
+        path: /var/run/docker.sock
+    settings:
+      daemon_off: true
+      dry_run: true
+      ssh_agent_key:
+        from_secret: drone-ssh-key
+      repo: k8s-discovery-rustdocs
+      target: build-rustdocs
+
+  - name: publish-techdocs
+    when:
+      ref:
+        - refs/heads/main
+    depends_on:
+      - build-techdocs
+    image: plugins/docker
+    volumes:
+      - name: dockerd
+        path: /var/run/docker.sock
+    environment:
+      MINIO_CREDENTIALS:
+        from_secret: MINIO_CREDENTIALS
+    settings:
+      daemon_off: true
+      dry_run: true
+      repo: k8s-discovery-publish-techdocs
+      target: publish-techdocs
+      secrets_from_env:
+        - minio_credentials=MINIO_CREDENTIALS
+
+  - name: publish-rustdocs
+    when:
+      ref:
+        - refs/heads/main
+    depends_on:
+      - build-rustdocs
+    image: plugins/docker
+    volumes:
+      - name: dockerd
+        path: /var/run/docker.sock
+    environment:
+      MINIO_CONFIG:
+        from_secret: minio-config
+      CONTC_CA:
+        from_secret: contc-ca
+    settings:
+      daemon_off: true
+      dry_run: true
+      repo: k8s-discovery-publish-rustdocs
+      target: publish-rustdocs
+      secrets_from_env:
+        - minio-config=MINIO_CONFIG
+        - contc-ca=CONTC_CA

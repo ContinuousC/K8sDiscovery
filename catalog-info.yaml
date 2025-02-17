@@ -1,0 +1,40 @@
+################################################################################
+# Copyright ContinuousC. Licensed under the "Elastic License 2.0".             #
+################################################################################
+
+apiVersion: backstage.io/v1alpha1
+kind: System
+metadata:
+  name: k8s-discovery
+  description: ContinuousC Kubernetes discovery
+spec:
+  owner: developers
+  domain: continuousc
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: k8s-discovery-helm-chart
+  description: Kubernetes Discovery Helm chart
+spec:
+  type: service
+  lifecycle: production
+  owner: developers
+  system: k8s-discovery
+  dependsOn:
+    - component:k8s-discovery
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: k8s-discovery
+  description: k8s-discovery process running a k8s cluster
+  annotations:
+    backstage.io/techdocs-ref: dir:.
+spec:
+  type: service
+  lifecycle: production
+  owner: developers
+  system: k8s-discovery
+  consumesApis:
+    - relation-graph-api

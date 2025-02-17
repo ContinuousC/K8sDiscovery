@@ -1,0 +1,11 @@
+site_name: "K8sdiscovery"
+
+nav:
+  - Home: index.md
+  - Development: development.md
+  - Release: release.md
+  - Installation: installation.md
+  - API: api.md
+
+plugins:
+  - techdocs-core

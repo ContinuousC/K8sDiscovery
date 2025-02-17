@@ -1,0 +1,12 @@
+api: 0.1.1
+artifacts:
+  k8s-discovery-chart:
+    type: helm
+    pre_tag:
+      - run: helm cm-push . continuousc
+    source:
+      type: helm
+      root: .
+      values:
+        - path: discovery.tag
+          artifact: k8s-discovery-image

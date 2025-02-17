@@ -1,0 +1,21 @@
+api: 0.1.16
+artifacts:
+  k8s-discovery-image:
+    type: docker
+    pre_commit:
+      - run: cargo update -w
+        files:
+          - Cargo.lock
+    pre_tag:
+      - run: |
+          docker image rm k8s-discovery;
+          DOCKER_BUILDKIT=1 docker build --ssh default --target release -t k8s-discovery:$VC_ARTIFACT_VERSION .
+          docker tag k8s-discovery:$VC_ARTIFACT_VERSION gitea.contc/continuousc/k8s-discovery:$VC_ARTIFACT_VERSION
+          docker push gitea.contc/continuousc/k8s-discovery:$VC_ARTIFACT_VERSION
+    source:
+      type: cargo
+      root: .
+      paths:
+        - Dockerfile
+        - Cargo.toml
+        - src

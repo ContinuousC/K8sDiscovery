@@ -1,0 +1,38 @@
+################################################################################
+# Copyright ContinuousC. Licensed under the "Elastic License 2.0".             #
+################################################################################
+
+version: v2beta1
+name: k8s-discovery-chart
+
+pullSecrets:
+  gitea:
+    registry: gitea.contc
+
+deployments:
+  k8s-discovery:
+    helm:
+      displayOutput: true
+      chart:
+        path: .
+      releaseName: k8s-discovery
+      values:
+        discovery:
+          tag: latest
+          cluster: dev-management-cluster
+          createClusterRole: false
+          intervalMinutes: 1
+          engineUrl: "http://relation-graph-engine.continuousc-${USER}-${TENANT}/api/"
+        prometheus:
+          server:
+            global:
+              external_labels:
+                cluster: dev-management-cluster
+            remoteWrite:
+              - url: http://cortex-distributor.cortex:8080/api/v1/push
+                headers:
+                  X-Scope-OrgID: ${USER}-demo
+          prometheus-node-exporter:
+            enabled: false
+          kube-state-metrics:
+            enabled: false

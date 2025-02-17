@@ -1,0 +1,10 @@
+################################################################################
+# Copyright ContinuousC. Licensed under the "Elastic License 2.0".             #
+################################################################################
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: k8s-discovery-scrape-configs
+data:
+{{ (.Files.Glob "scrape_configs/*.yaml").AsConfig | indent 2 }}

@@ -1,0 +1,16 @@
+################################################################################
+# Copyright ContinuousC. Licensed under the "Elastic License 2.0".             #
+################################################################################
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: "continuousc-k8s-discovery-{{ .Release.Namespace }}"
+subjects:
+  - kind: ServiceAccount
+    name: k8s-discovery
+    namespace: "{{ .Release.Namespace }}"
+roleRef:
+  kind: ClusterRole
+  name: continuousc-k8s-discovery
+  apiGroup: rbac.authorization.k8s.io

@@ -1,0 +1,14 @@
+################################################################################
+# Copyright ContinuousC. Licensed under the "Elastic License 2.0".             #
+################################################################################
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: k8s-discovery-state
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 500M

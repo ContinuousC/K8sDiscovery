@@ -1,0 +1,18 @@
+################################################################################
+# Copyright ContinuousC. Licensed under the "Elastic License 2.0".             #
+################################################################################
+
+version: v2beta1
+name: k8s-discovery
+
+dependencies:
+  k8s-discovery-chart:
+    path: Chart/devspace.yaml
+  k8s-discovery-dev:
+    path: Discovery/devspace.yaml
+
+pipelines:
+  deploy: |
+    run_dependency_pipelines --pipeline deploy k8s-discovery-chart
+  dev: |
+    run_dependency_pipelines --all --exclude k8s-discovery-chart --pipeline dev
