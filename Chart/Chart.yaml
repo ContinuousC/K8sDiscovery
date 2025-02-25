@@ -3,7 +3,7 @@
 ################################################################################
 
 apiVersion: v2
-name: k8s-discovery
+name: k8s-discovery-chart
 type: application
 version: '0.0.8-acc.30'
 dependencies:
