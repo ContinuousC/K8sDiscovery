@@ -74,7 +74,7 @@ This Helm Chart installs the ContinuousC Kubernetes discovery and metrics shippe
 * Finally, install the helm chart to the cluster you want to monitor:
 
   ```
-  helm install --kube-context $CONTEXT --namespace continuousc --values config.yaml --create-namespace k8s-discovery continuousc/k8s-discovery
+  helm install --kube-context $CONTEXT --namespace continuousc --values config.yaml --create-namespace k8s-discovery continuousc/k8s-discovery-chart
   ```
 
 # Update
@@ -83,5 +83,5 @@ This Helm Chart installs the ContinuousC Kubernetes discovery and metrics shippe
 
   ```
   helm repo update
-  helm upgrade  --kube-context $CONTEXT --namespace continuousc --values config.yaml k8s-discovery continuousc/k8s-discovery
+  helm upgrade  --kube-context $CONTEXT --namespace continuousc --values config.yaml k8s-discovery continuousc/k8s-discovery-chart
   ```
