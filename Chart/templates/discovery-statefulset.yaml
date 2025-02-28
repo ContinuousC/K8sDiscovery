@@ -40,20 +40,10 @@ spec:
             - name: CONTINUOUSC_ENGINE
               value: "{{ .Values.discovery.engineUrl }}"
             {{- end }}
-            {{- if .Values.discovery.opensearchUrl }}
-            - name: CONTINUOUSC_EVENTS
-              value: "true"
-            - name: CONTINUOUSC_OPENSEARCH_URL
-              value: "{{ .Values.discovery.opensearchUrl }}"
-            {{- end }}
-            {{- if .Values.discovery.authenticationCertsSecretName }}
-            - name: CONTINUOUSC_AUTH_CERT
-              value: /usr/share/continuousc/certs/tls.crt
-            - name: CONTINUOUSC_AUTH_KEY
-              value: /usr/share/continuousc/certs/tls.key
-            {{- end }}
+            {{- if .Values.app.ca-domain }}
             - name: CONTINUOUSC_AUTH_CA
               value: "/usr/share/continuousc/ca-cert/ca.crt"
+            {{- end }}
             {{- if .Values.discovery.token.url }}
             - name: CONTINUOUSC_TOKEN_URL
               value: {{ .Values.discovery.token.url }}
@@ -65,17 +55,15 @@ spec:
           volumeMounts:
             - name: state
               mountPath: /usr/share/continuousc/state
+            {{- if .Values.app.ca-domain }}
             - name: ca-cert
               mountPath: /usr/share/continuousc/ca-cert
+              readOnly: true
+            {{- end }}
             {{- if .Values.discovery.token.url }}
             - name: credentials
               mountPath: /usr/share/continuousc/token-creds
             {{- end }}
-            {{- if .Values.discovery.authenticationCertsSecretName }}
-            - name: authentication-cert
-              readOnly: true
-              mountPath: /usr/share/continuousc/certs
-            {{ end }}
       volumes:
         - name: state
           persistentVolumeClaim:
@@ -83,13 +71,9 @@ spec:
         - name: ca-cert
           configMap:
             name: k8s-discovery-continuousc-ca
+            optional: true
         {{- if .Values.discovery.token.url }}
         - name: credentials
           secret:
             secretName: {{ .Values.discovery.token.secretName }}
         {{- end }}
-        {{- if .Values.discovery.authenticationCertsSecretName }}
-        - name: authentication-cert
-          secret:
-            secretName: {{ .Values.discovery.authenticationCertsSecretName }}
-        {{ end }}

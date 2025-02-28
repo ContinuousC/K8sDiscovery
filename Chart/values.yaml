@@ -4,6 +4,7 @@
 
 app:
   imageRegistryBase: "gitea.contc/continuousc"
+  ca-domain: ""
 
 discovery:
   cluster: ""
@@ -16,8 +17,6 @@ discovery:
     userName: ""
     secretName: credentials
     secretPath: discovery.secret
-  opensearchUrl: ""
-  authenticationCertsSecretName: ""
   createClusterRole: true
 
 prometheus:
